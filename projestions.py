@@ -150,7 +150,6 @@ class LoadCrssThread(QtCore.QThread):
             extent = self.project_extent()
         elif self.DROPDOWN_CHOICES[index] == 'MAP_CANVAS':
             extent = self.map_canvas_extent()
-            QgsMessageLog.logMessage('map_canvas_extent %s' % extent.toString())
 
         return extent
 
