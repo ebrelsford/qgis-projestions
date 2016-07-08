@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     PROJESTIONS_URL = 'http://localhost:3000/'
