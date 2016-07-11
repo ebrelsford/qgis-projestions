@@ -48,7 +48,7 @@ PY_FILES = \
 
 UI_FILES = projestions_dialog_base.ui
 
-EXTRAS = metadata.txt icon.png
+EXTRAS = metadata.txt icon.png settings.py
 
 COMPILED_RESOURCE_FILES = resources.py
 
