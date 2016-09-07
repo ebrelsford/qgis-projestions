@@ -28,6 +28,7 @@ from qgis.core import (QgsMapLayerRegistry, QgsMessageLog, QgsProject,
                        QgsCoordinateTransform)
 from qgis.gui import QgsMessageBar
 import time
+import traceback
 import urllib
 import urllib2
 
@@ -160,9 +161,18 @@ class LoadCrssThread(QtCore.QThread):
                 'geojson': 'false',
                 'geom': QgsGeometry().fromRect(extent).exportToGeoJSON(),
             }))
-            response = urllib2.urlopen(url)
-            crss = json.load(response)
-            self.tableModel.setItems(crss)
+            try:
+                response = urllib2.urlopen(url)
+                crss = json.load(response)
+                self.tableModel.setItems(crss)
+            except urllib2.URLError as e:
+                QgsMessageLog.logMessage('URLError while loading projestions: %s' % str(e), tag="Projestions", level=QgsMessageLog.WARNING)
+                self.warningSent.emit("Failed to get projestions from API.  Please try again and see the error log for details.")
+            except Exception as e:
+                QgsMessageLog.logMessage('%s while loading projections' % type(e).__name__, tag="Projestions", level=QgsMessageLog.WARNING)
+                QgsMessageLog.logMessage(traceback.format_exc(), tag="Projestions", level=QgsMessageLog.WARNING)
+                self.warningSent.emit("Failed to get projestions from API.  Please try again and see the error log for details.")
+
         self.taskFinished.emit()  
         self.quit()
 
