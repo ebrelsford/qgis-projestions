@@ -288,7 +288,7 @@ class Projestions:
             self.toolbar.addAction(action)
 
         if add_to_menu:
-            self.iface.addPluginToWebMenu(self.menu, action)
+            self.iface.addPluginToMenu(self.menu, action)
 
         self.actions.append(action)
 
