@@ -24,8 +24,8 @@ from PyQt4 import QtCore, QtGui
 import json
 import os.path
 from qgis.core import (QgsMapLayerRegistry, QgsMessageLog, QgsProject,
-                       QgsGeometry, QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform)
+                       QgsFeature, QgsGeometry, QgsCoordinateReferenceSystem,
+                       QgsCoordinateTransform, QgsJSONExporter)
 from qgis.gui import QgsMessageBar
 import time
 import traceback
@@ -88,7 +88,8 @@ class CrsTableModel(QtCore.QAbstractTableModel):
 class LoadCrssThread(QtCore.QThread):
 
     DROPDOWN_CHOICES = [
-        'ACTIVE_LAYER',
+        'ACTIVE_LAYER_BBOX',
+        'ACTIVE_LAYER_GEOM',
         'PROJECT',
         'MAP_CANVAS',
     ]
@@ -108,6 +109,25 @@ class LoadCrssThread(QtCore.QThread):
             currentCrs = self.iface.activeLayer().crs()
             transform = QgsCoordinateTransform(currentCrs, destCrs)
             return transform.transformBoundingBox(self.iface.activeLayer().extent())
+        else:
+            self.warningSent.emit("Please select a layer before using the active layer option")
+            return None
+
+    def active_layer_geom(self):
+        if self.iface.activeLayer():
+            exporter = QgsJSONExporter(self.iface.activeLayer(), 6)
+            exporter.setExcludedAttributes(self.iface.activeLayer().attributeList())
+
+            featureList = []
+            feature = QgsFeature()
+            iterator = self.iface.activeLayer().getFeatures()
+
+            while iterator.nextFeature(feature):
+                feature.setGeometry(feature.geometry().simplify(0.1))
+                featureList.append(feature)
+                feature = QgsFeature()
+
+            return exporter.exportFeatures(featureList)
         else:
             self.warningSent.emit("Please select a layer before using the active layer option")
             return None
@@ -140,26 +160,30 @@ class LoadCrssThread(QtCore.QThread):
         transform = QgsCoordinateTransform(settings.destinationCrs(), destCrs)
         return transform.transformBoundingBox(settings.extent())
 
-    def extent(self):
+    def geojson(self):
         index = self.extentComboBox.currentIndex()
-        destCrs = QgsCoordinateReferenceSystem(4326)
-        currentCrs = self.iface.mapCanvas().mapSettings().destinationCrs()
 
-        if self.DROPDOWN_CHOICES[index] == 'ACTIVE_LAYER':
+        if self.DROPDOWN_CHOICES[index] == 'ACTIVE_LAYER_GEOM':
+            # This returns a GeoJSON, so just return that
+            return self.active_layer_geom()
+
+        extent = None
+        if self.DROPDOWN_CHOICES[index] == 'ACTIVE_LAYER_BBOX':
             extent = self.active_layer_extent()
         elif self.DROPDOWN_CHOICES[index] == 'PROJECT':
             extent = self.project_extent()
         elif self.DROPDOWN_CHOICES[index] == 'MAP_CANVAS':
             extent = self.map_canvas_extent()
-
-        return extent
+        if not extent:
+            return None
+        return QgsGeometry().fromRect(extent).exportToGeoJSON()
 
     def run(self):
-        extent = self.extent()
-        if extent:
+        geojson = self.geojson()
+        if geojson:
             url = '%s?%s' % (settings.PROJESTIONS_URL, urllib.urlencode({
                 'geojson': 'false',
-                'geom': QgsGeometry().fromRect(extent).exportToGeoJSON(),
+                'geom': geojson
             }))
             try:
                 response = urllib2.urlopen(url)

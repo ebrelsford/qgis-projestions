@@ -33,7 +33,12 @@
       <widget class="QComboBox" name="extentComboBox">
        <item>
         <property name="text">
-         <string>Active layer extent</string>
+         <string>Active layer extent (bbox)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Active layer (geometry)</string>
         </property>
        </item>
        <item>
