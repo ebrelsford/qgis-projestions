@@ -182,11 +182,11 @@ class LoadCrssThread(QtCore.QThread):
         geojson = self.geojson()
         if geojson:
             url = '%s?%s' % (settings.PROJESTIONS_URL, urllib.urlencode({
-                'geojson': 'false',
-                'geom': geojson
+                'geojson': 'false'
             }))
             try:
-                response = urllib2.urlopen(url)
+                request = urllib2.Request(url, json.dumps({ 'geom': geojson }), { 'Content-Type': 'application/json' })
+                response = urllib2.urlopen(request)
                 crss = json.load(response)
                 self.tableModel.setItems(crss)
             except urllib2.URLError as e:
