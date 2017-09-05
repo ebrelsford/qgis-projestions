@@ -1,39 +1,26 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=Projestions
 qgisMinimumVersion=2.0
-description=projection suggestions
+description=Projestions: projection suggestions
 version=0.2.1
 author=Eric Brelsford
 email=ebrelsford@gmail.com
+tracker=http://github.com/ebrelsford/qgis-projestions/issues
+repository=http://github.com/ebrelsford/qgis-projestions
+homepage=https://projest.io/ns/
+tags=crs,projection
+category=Web
+icon=icon.png
+experimental=True
+deprecated=False
 
 about=Projestions (projection + suggestions) for your active map layer or project using the EPSG area of use data. Select which geometry to send to the API for projestions, then the top suggestions are displayed. Select one of the suggeested projections to set your project's projection.
 
-tracker=http://github.com/ebrelsford/qgis-projestions/issues
-repository=http://github.com/ebrelsford/qgis-projestions
-# End of mandatory metadata
-
-# Recommended items:
-
-# Uncomment the following line and add your changelog:
-# changelog=
-
-# Tags are comma separated with spaces allowed
-tags=crs, projection
-
-homepage=http://github.com/ebrelsford/qgis-projestions
-category=Web
-icon=icon.png
-# experimental flag
-experimental=True
-
-# deprecated flag (applies to the whole plugin, not just a single version)
-deprecated=False
-
+changelog=0.2.1
+   - Bug fix and performance improvements when active layer geometry is used with a large number of features
+  0.2.0
+   - Move to `Plugins`
+   - Search by active layer's geometry in addition to extent
+  0.1.2
+   - Use HTTPS
+   - Handle exceptions when loading from API
