@@ -10,7 +10,7 @@
 name=Projestions
 qgisMinimumVersion=2.0
 description=projection suggestions
-version=0.2.0
+version=0.2.1
 author=Eric Brelsford
 email=ebrelsford@gmail.com
 
