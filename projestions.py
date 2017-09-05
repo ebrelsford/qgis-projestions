@@ -50,12 +50,14 @@ class CrsTableModel(QtCore.QAbstractTableModel):
         self.items = []
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal:
+        if (role == QtCore.Qt.DisplayRole and
+                orientation == QtCore.Qt.Horizontal):
             return self.header_labels[section]
-        return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
+        return QtCore.QAbstractTableModel.headerData(self, section,
+                                                     orientation, role)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self.items)      
+        return len(self.items)
 
     def columnCount(self, parent=QtCore.QModelIndex()):
         return 4
@@ -109,9 +111,11 @@ class LoadCrssThread(QtCore.QThread):
             destCrs = QgsCoordinateReferenceSystem(4326)
             currentCrs = self.iface.activeLayer().crs()
             transform = QgsCoordinateTransform(currentCrs, destCrs)
-            return transform.transformBoundingBox(self.iface.activeLayer().extent())
+            extend = self.iface.activeLayer().extent()
+            return transform.transformBoundingBox(extent)
         else:
-            self.warningSent.emit("Please select a layer before using the active layer option")
+            self.warningSent.emit('Please select a layer before using the '
+                                  'active layer option')
             return None
 
     def active_layer_geom(self):
@@ -122,7 +126,8 @@ class LoadCrssThread(QtCore.QThread):
             if layer.featureCount() > settings.PROJESTIONS_MAX_FEATURES:
                 # If too many features, randomly select some
                 processing.runalg('qgis:randomselection', layer, 0,
-                        settings.PROJESTIONS_MAX_FEATURES, progress=False)
+                                  settings.PROJESTIONS_MAX_FEATURES,
+                                  progress=False)
                 featureList = layer.selectedFeatures()
                 layer.removeSelection()
             else:
@@ -138,7 +143,8 @@ class LoadCrssThread(QtCore.QThread):
             exporter.setExcludedAttributes(layer.attributeList())
             return exporter.exportFeatures(featureList)
         else:
-            self.warningSent.emit("Please select a layer before using the active layer option")
+            self.warningSent.emit('Please select a layer before using the '
+                                  'active layer option')
             return None
 
     def project_extent(self):
@@ -194,26 +200,34 @@ class LoadCrssThread(QtCore.QThread):
                 'geojson': 'false'
             }))
             try:
-                request = urllib2.Request(url, json.dumps({ 'geom': geojson }), { 'Content-Type': 'application/json' })
-                response = urllib2.urlopen(request)
-                crss = json.load(response)
-                self.tableModel.setItems(crss)
-            except urllib2.URLError as e:
-                QgsMessageLog.logMessage('URLError while loading projestions: %s' % str(e), tag="Projestions", level=QgsMessageLog.WARNING)
-                self.warningSent.emit("Failed to get projestions from API.  Please try again and see the error log for details.")
+                projestions = projestions_api.get_projestions(geojson)
+                self.tableModel.setItems(projestions)
+            except URLError as e:
+                msg = 'URLError while loading projestions: %s' % str(e)
+                QgsMessageLog.logMessage(msg, tag="Projestions",
+                                         level=QgsMessageLog.WARNING)
+                self.warningSent.emit('Failed to get projestions from API. '
+                                      'Please try again and see the error log '
+                                      'for details.')
             except Exception as e:
-                QgsMessageLog.logMessage('%s while loading projections' % type(e).__name__, tag="Projestions", level=QgsMessageLog.WARNING)
-                QgsMessageLog.logMessage(traceback.format_exc(), tag="Projestions", level=QgsMessageLog.WARNING)
-                self.warningSent.emit("Failed to get projestions from API.  Please try again and see the error log for details.")
+                msg = '%s while loading projections' % type(e).__name__
+                QgsMessageLog.logMessage(msg, tag="Projestions",
+                                         level=QgsMessageLog.WARNING)
+                QgsMessageLog.logMessage(traceback.format_exc(),
+                                         tag="Projestions",
+                                         level=QgsMessageLog.WARNING)
+                self.warningSent.emit('Failed to get projestions from API. '
+                                      'Please try again and see the error log '
+                                      'for details.')
 
-        self.taskFinished.emit()  
+        self.taskFinished.emit()
         self.quit()
 
 
 class LoadCrssProgressBar(QtGui.QWidget):
 
     def __init__(self, parent=None, iface=None, extentComboBox=None,
-            tableModel=None, plugin=None):
+                 tableModel=None, plugin=None):
         super(LoadCrssProgressBar, self).__init__(parent)
         layout = QtGui.QVBoxLayout(self)
         self.iface = iface
@@ -223,30 +237,32 @@ class LoadCrssProgressBar(QtGui.QWidget):
 
         # Create a progress bar and a button and add them to the main layout
         self.progressBar = QtGui.QProgressBar(self)
-        self.progressBar.setRange(0,1)
+        self.progressBar.setRange(0, 1)
         layout.addWidget(self.progressBar)
 
-    def onStart(self): 
+    def onStart(self):
         """Clear progress bar, current CRSs, and start loading new ones"""
-        self.progressBar.setRange(0,0)
+        self.progressBar.setRange(0, 0)
         self.tableModel.setItems([])
 
         # Set up signals
-        self.loadCrssThread = LoadCrssThread(self.iface, self.extentComboBox, self.tableModel)
+        self.loadCrssThread = LoadCrssThread(self.iface, self.extentComboBox,
+                                             self.tableModel)
         self.loadCrssThread.taskFinished.connect(self.onFinished)
         self.loadCrssThread.warningSent.connect(self.onWarning)
         self.loadCrssThread.start()
 
     def onFinished(self):
         """Stop the progress bar"""
-        self.progressBar.setRange(0,1)
+        self.progressBar.setRange(0, 1)
         self.loadCrssThread.taskFinished.disconnect(self.onFinished)
         self.loadCrssThread.warningSent.disconnect(self.onWarning)
         self.loadCrssThread = None
         self.plugin.search_complete()
 
     def onWarning(self, warning):
-        self.iface.messageBar().pushMessage('Warning', warning, QgsMessageBar.WARNING)
+        self.iface.messageBar().pushMessage('Warning', warning,
+                                            QgsMessageBar.WARNING)
 
 
 class Projestions:
@@ -262,7 +278,7 @@ class Projestions:
         # initialize locale
         locale = QtCore.QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(self.plugin_dir, 'i18n',
-            'Projestions_{}.qm'.format(locale))
+                                   'Projestions_{}.qm'.format(locale))
 
         if os.path.exists(locale_path):
             self.translator = QtCore.QTranslator()
@@ -304,8 +320,8 @@ class Projestions:
         return QtCore.QCoreApplication.translate('Projestions', message)
 
     def add_action(self, icon_path, text, callback, enabled_flag=True,
-            add_to_menu=True, add_to_toolbar=True, status_tip=None,
-            whats_this=None, parent=None):
+                   add_to_menu=True, add_to_toolbar=True, status_tip=None,
+                   whats_this=None, parent=None):
         icon = QtGui.QIcon(icon_path)
         action = QtGui.QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -331,7 +347,7 @@ class Projestions:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = ':/plugins/Projestions/icon.png'
         self.add_action(icon_path, text=self.tr(u'Projestions'),
-            callback=self.run, parent=self.iface.mainWindow())
+                        callback=self.run, parent=self.iface.mainWindow())
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -350,7 +366,8 @@ class Projestions:
 
         # Set up progress bar
         self.progressBar = LoadCrssProgressBar(self.dlg, self.iface,
-                self.dlg.extentComboBox, self.tableModel, self)
+                                               self.dlg.extentComboBox,
+                                               self.tableModel, self)
         self.dlg.buttonLayout.insertWidget(0, self.progressBar)
 
         # Aaaaaand go!
@@ -375,7 +392,10 @@ class Projestions:
                 item = self.dlg.crsTableView.selectionModel().selectedRows()[0]
                 row = item.row()
                 data = item.data()
-                new_crs = QgsCoordinateReferenceSystem(data, QgsCoordinateReferenceSystem.EpsgCrsId)
+                new_crs = QgsCoordinateReferenceSystem(
+                    data,
+                    QgsCoordinateReferenceSystem.EpsgCrsId
+                )
                 self.iface.mapCanvas().setDestinationCrs(new_crs)
             except IndexError:
                 pass
