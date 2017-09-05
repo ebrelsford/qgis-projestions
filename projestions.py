@@ -25,8 +25,9 @@ import json
 import os.path
 from qgis.core import (QgsMapLayerRegistry, QgsMessageLog, QgsProject,
                        QgsFeature, QgsGeometry, QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform, QgsJSONExporter)
+                       QgsCoordinateTransform, QgsJSONExporter, QgsVectorLayer)
 from qgis.gui import QgsMessageBar
+import processing
 import time
 import traceback
 import urllib
@@ -115,18 +116,26 @@ class LoadCrssThread(QtCore.QThread):
 
     def active_layer_geom(self):
         if self.iface.activeLayer():
-            exporter = QgsJSONExporter(self.iface.activeLayer(), 6)
-            exporter.setExcludedAttributes(self.iface.activeLayer().attributeList())
-
+            layer = self.iface.activeLayer()
             featureList = []
-            feature = QgsFeature()
-            iterator = self.iface.activeLayer().getFeatures()
 
-            while iterator.nextFeature(feature):
-                feature.setGeometry(feature.geometry().simplify(0.1))
-                featureList.append(feature)
+            if layer.featureCount() > settings.PROJESTIONS_MAX_FEATURES:
+                # If too many features, randomly select some
+                processing.runalg('qgis:randomselection', layer, 0,
+                        settings.PROJESTIONS_MAX_FEATURES, progress=False)
+                featureList = layer.selectedFeatures()
+                layer.removeSelection()
+            else:
+                # Else get all of the features
                 feature = QgsFeature()
+                iterator = layer.getFeatures()
+                while iterator.nextFeature(feature):
+                    feature.setGeometry(feature.geometry().simplify(0.1))
+                    featureList.append(feature)
+                    feature = QgsFeature()
 
+            exporter = QgsJSONExporter(layer, 6)
+            exporter.setExcludedAttributes(layer.attributeList())
             return exporter.exportFeatures(featureList)
         else:
             self.warningSent.emit("Please select a layer before using the active layer option")
