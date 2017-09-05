@@ -21,18 +21,16 @@
  ***************************************************************************/
 """
 from PyQt4 import QtCore, QtGui
-import json
 import os.path
 from qgis.core import (QgsMapLayerRegistry, QgsMessageLog, QgsProject,
                        QgsFeature, QgsGeometry, QgsCoordinateReferenceSystem,
                        QgsCoordinateTransform, QgsJSONExporter, QgsVectorLayer)
 from qgis.gui import QgsMessageBar
 import processing
-import time
 import traceback
-import urllib
-import urllib2
+from urllib2 import URLError
 
+import projestions_api
 # Initialize Qt resources from file resources.py
 import resources
 import settings
@@ -196,9 +194,6 @@ class LoadCrssThread(QtCore.QThread):
     def run(self):
         geojson = self.geojson()
         if geojson:
-            url = '%s?%s' % (settings.PROJESTIONS_URL, urllib.urlencode({
-                'geojson': 'false'
-            }))
             try:
                 projestions = projestions_api.get_projestions(geojson)
                 self.tableModel.setItems(projestions)
