@@ -3,6 +3,9 @@
 
 import sys
 import logging
+import os.path
+
+from qgis.core import QgsVectorLayer
 
 
 LOGGER = logging.getLogger('QGIS')
@@ -10,6 +13,11 @@ QGIS_APP = None  # Static variable used to hold hand to running QGIS app
 CANVAS = None
 PARENT = None
 IFACE = None
+
+
+def load_data(name):
+    path = os.path.join(os.path.dirname(__file__), 'data', name)
+    return QgsVectorLayer(path, name, 'ogr')
 
 
 def get_qgis_app():

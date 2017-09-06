@@ -22,15 +22,13 @@
 """
 from PyQt4 import QtCore, QtGui
 import os.path
-from qgis.core import (QgsMapLayerRegistry, QgsMessageLog, QgsProject,
-                       QgsFeature, QgsGeometry, QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform, QgsJSONExporter, QgsVectorLayer)
+from qgis.core import QgsMessageLog, QgsProject, QgsCoordinateReferenceSystem
 from qgis.gui import QgsMessageBar
-import processing
 import traceback
 from urllib2 import URLError
 
 import projestions_api
+import projestions_geoms
 # Initialize Qt resources from file resources.py
 import resources
 import settings
@@ -106,11 +104,7 @@ class LoadCrssThread(QtCore.QThread):
 
     def active_layer_extent(self):
         if self.iface.activeLayer():
-            destCrs = QgsCoordinateReferenceSystem(4326)
-            currentCrs = self.iface.activeLayer().crs()
-            transform = QgsCoordinateTransform(currentCrs, destCrs)
-            extend = self.iface.activeLayer().extent()
-            return transform.transformBoundingBox(extent)
+            return projestions_geoms.layer_extent(self.iface.activeLayer())
         else:
             self.warningSent.emit('Please select a layer before using the '
                                   'active layer option')
@@ -118,78 +112,31 @@ class LoadCrssThread(QtCore.QThread):
 
     def active_layer_geom(self):
         if self.iface.activeLayer():
-            layer = self.iface.activeLayer()
-            featureList = []
-
-            if layer.featureCount() > settings.PROJESTIONS_MAX_FEATURES:
-                # If too many features, randomly select some
-                processing.runalg('qgis:randomselection', layer, 0,
-                                  settings.PROJESTIONS_MAX_FEATURES,
-                                  progress=False)
-                featureList = layer.selectedFeatures()
-                layer.removeSelection()
-            else:
-                # Else get all of the features
-                feature = QgsFeature()
-                iterator = layer.getFeatures()
-                while iterator.nextFeature(feature):
-                    feature.setGeometry(feature.geometry().simplify(0.1))
-                    featureList.append(feature)
-                    feature = QgsFeature()
-
-            exporter = QgsJSONExporter(layer, 6)
-            exporter.setExcludedAttributes(layer.attributeList())
-            return exporter.exportFeatures(featureList)
+            return projestions_geoms.layer_geom(self.iface.activeLayer())
         else:
             self.warningSent.emit('Please select a layer before using the '
                                   'active layer option')
             return None
 
     def project_extent(self):
-        """
-        Calculate the project's extent from each layer's extent.
-
-        Can't assume on-the-fly transformation is on, so we convert each
-        layer's extent to 4326, then combine it.
-        """
-        extent = None
-        destCrs = QgsCoordinateReferenceSystem(4326)
-        settings = self.iface.mapCanvas().mapSettings()
-        for layer in QgsMapLayerRegistry.instance().mapLayers().values():
-            transform = QgsCoordinateTransform(layer.crs(), destCrs)
-            layer_extent = transform.transformBoundingBox(layer.extent())
-            if extent:
-                extent.combineExtentWith(layer_extent)
-            else:
-                extent = layer_extent
-        return extent
+        return projestions_geoms.project_extent()
 
     def map_canvas_extent(self):
-        destCrs = QgsCoordinateReferenceSystem(4326)
-        settings = self.iface.mapCanvas().mapSettings()
-
-        # Force on-the-fly projection to ensure that the reprojection works
-        settings.setCrsTransformEnabled(True)
-        transform = QgsCoordinateTransform(settings.destinationCrs(), destCrs)
-        return transform.transformBoundingBox(settings.extent())
+        return projestions_geoms.map_canvas_extent(self.iface.mapCanvas())
 
     def geojson(self):
         index = self.extentComboBox.currentIndex()
+        choice = self.DROPDOWN_CHOICES[index]
 
-        if self.DROPDOWN_CHOICES[index] == 'ACTIVE_LAYER_GEOM':
-            # This returns a GeoJSON, so just return that
+        if choice == 'ACTIVE_LAYER_GEOM':
             return self.active_layer_geom()
-
-        extent = None
-        if self.DROPDOWN_CHOICES[index] == 'ACTIVE_LAYER_BBOX':
-            extent = self.active_layer_extent()
-        elif self.DROPDOWN_CHOICES[index] == 'PROJECT':
-            extent = self.project_extent()
-        elif self.DROPDOWN_CHOICES[index] == 'MAP_CANVAS':
-            extent = self.map_canvas_extent()
-        if not extent:
-            return None
-        return QgsGeometry().fromRect(extent).exportToGeoJSON()
+        elif choice == 'ACTIVE_LAYER_BBOX':
+            return self.active_layer_extent()
+        elif choice == 'PROJECT':
+            return self.project_extent()
+        elif choice == 'MAP_CANVAS':
+            return self.map_canvas_extent()
+        return None
 
     def run(self):
         geojson = self.geojson()
