@@ -14,7 +14,7 @@ icon=icon.png
 experimental=True
 deprecated=False
 
-about=Projestions (projection + suggestions) for your active map layer or project using the EPSG area of use data. Select which geometry to send to the API for projestions, then the top suggestions are displayed. Select one of the suggeested projections to set your project's projection.
+about=Projestions (projection + suggestions) for your active map layer or project using the EPSG area of use data. Select which geometry to send to the API for projestions, then the top suggestions are displayed. Select one of the suggested projections to set your project's projection.
 
 changelog=0.3.0
    - Improve metadata
