@@ -1,20 +1,20 @@
 from qgis.core import (QgsCoordinateReferenceSystem, QgsCoordinateTransform,
-                       QgsFeature, QgsGeometry, QgsJSONExporter,
-                       QgsMapLayerRegistry)
+                       QgsFeature, QgsGeometry, QgsJsonExporter,
+                       QgsProcessingFeedback, QgsProject)
 
-import settings
+from . import settings
 
 
 WGS84 = QgsCoordinateReferenceSystem(4326)
 
 
 def extent_to_geojson(extent):
-    return QgsGeometry().fromRect(extent).exportToGeoJSON()
+    return QgsGeometry().fromRect(extent).asJson()
 
 
 def layer_extent(layer):
     currentCrs = layer.crs()
-    transform = QgsCoordinateTransform(currentCrs, WGS84)
+    transform = QgsCoordinateTransform(currentCrs, WGS84, QgsProject.instance())
     return extent_to_geojson(transform.transformBoundingBox(layer.extent()))
 
 
@@ -24,9 +24,11 @@ def layer_geom(layer):
     if layer.featureCount() > settings.PROJESTIONS_MAX_FEATURES:
         # If too many features, randomly select some
         import processing
-        processing.runalg('qgis:randomselection', layer, 0,
-                          settings.PROJESTIONS_MAX_FEATURES,
-                          progress=False)
+        processing.run('qgis:randomselection', {
+            'INPUT': layer,
+            'METHOD': 0,
+            'NUMBER': settings.PROJESTIONS_MAX_FEATURES,
+        }, feedback=QgsProcessingFeedback())
         featureList = layer.selectedFeatures()
         layer.removeSelection()
     else:
@@ -38,7 +40,7 @@ def layer_geom(layer):
             featureList.append(feature)
             feature = QgsFeature()
 
-    exporter = QgsJSONExporter(layer, 6)
+    exporter = QgsJsonExporter(layer, 6)
     exporter.setExcludedAttributes(layer.attributeList())
     return exporter.exportFeatures(featureList)
 
@@ -51,8 +53,8 @@ def project_extent():
     layer's extent to 4326, then combine it.
     """
     extent = None
-    for layer in QgsMapLayerRegistry.instance().mapLayers().values():
-        transform = QgsCoordinateTransform(layer.crs(), WGS84)
+    for layer in list(QgsProject.instance().mapLayers().values()):
+        transform = QgsCoordinateTransform(layer.crs(), WGS84, QgsProject.instance())
         layer_extent = transform.transformBoundingBox(layer.extent())
         if extent:
             extent.combineExtentWith(layer_extent)
@@ -63,8 +65,5 @@ def project_extent():
 
 def map_canvas_extent(mapCanvas):
     settings = mapCanvas.mapSettings()
-
-    # Force on-the-fly projection to ensure that the reprojection works
-    settings.setCrsTransformEnabled(True)
-    transform = QgsCoordinateTransform(settings.destinationCrs(), WGS84)
+    transform = QgsCoordinateTransform(settings.destinationCrs(), WGS84, QgsProject.instance())
     return extent_to_geojson(transform.transformBoundingBox(settings.extent()))

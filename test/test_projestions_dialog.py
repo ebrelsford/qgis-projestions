@@ -14,7 +14,7 @@ __copyright__ = 'Copyright 2016, Eric Brelsford'
 
 import unittest
 
-from PyQt4.QtGui import QDialogButtonBox, QDialog
+from PyQt5.QtWidgets import QDialogButtonBox, QDialog
 
 from projestions_dialog import ProjestionsDialog
 

@@ -14,7 +14,7 @@ __copyright__ = 'Copyright 2016, Eric Brelsford'
 
 import unittest
 
-from PyQt4.QtGui import QIcon
+from PyQt5.QtGui import QIcon
 
 
 

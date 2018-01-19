@@ -1,6 +1,6 @@
 [general]
 name=Projestions
-qgisMinimumVersion=2.0
+qgisMinimumVersion=3.0
 description=Projestions: projection suggestions
 version=0.3.0
 author=Eric Brelsford
