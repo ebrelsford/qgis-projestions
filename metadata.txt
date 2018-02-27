@@ -2,7 +2,7 @@
 name=Projestions
 qgisMinimumVersion=3.0
 description=Projestions: projection suggestions
-version=0.4.0
+version=0.4.1
 author=Eric Brelsford
 email=ebrelsford@gmail.com
 tracker=http://github.com/ebrelsford/qgis-projestions/issues
@@ -16,7 +16,9 @@ deprecated=False
 
 about=Projestions (projection + suggestions) for your active map layer or project using the EPSG area of use data. Select which geometry to send to the API for projestions, then the top suggestions are displayed. Select one of the suggested projections to set your project's projection.
 
-changelog=0.4.0
+changelog=0.4.1
+   - Fix MessageLevel bug after QGIS 3.0 release
+  0.4.0
    - Upgrade to QGIS 3.0, uncluding Python and Qt changes
   0.3.0
    - Improve metadata
