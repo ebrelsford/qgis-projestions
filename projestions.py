@@ -22,7 +22,7 @@
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 import os.path
-from qgis.core import QgsApplication, QgsProject, QgsCoordinateReferenceSystem
+from qgis.core import Qgis, QgsApplication, QgsProject, QgsCoordinateReferenceSystem
 from qgis.gui import QgsMessageBar
 import traceback
 from urllib.error import URLError
@@ -148,17 +148,17 @@ class LoadCrssThread(QtCore.QThread):
             except URLError as e:
                 msg = 'URLError while loading projestions: %s' % str(e)
                 QgsApplication.instance().messageLog().logMessage(msg, tag="Projestions",
-                                         level=QgsApplication.instance().messageLog().WARNING)
+                                         level=Qgis.MessageLevel(1))
                 self.warningSent.emit('Failed to get projestions from API. '
                                       'Please try again and see the error log '
                                       'for details.')
             except Exception as e:
                 msg = '%s while loading projections' % type(e).__name__
                 QgsApplication.instance().messageLog().logMessage(msg, tag="Projestions",
-                                         level=QgsApplication.instance().messageLog().WARNING)
+                                         level=Qgis.MessageLevel(1))
                 QgsApplication.instance().messageLog().logMessage(traceback.format_exc(),
                                          tag="Projestions",
-                                         level=QgsApplication.instance().messageLog().WARNING)
+                                         level=Qgis.MessageLevel(1))
                 self.warningSent.emit('Failed to get projestions from API. '
                                       'Please try again and see the error log '
                                       'for details.')
@@ -207,7 +207,7 @@ class LoadCrssProgressBar(QtWidgets.QWidget):
 
     def onWarning(self, warning):
         self.iface.messageBar().pushMessage('Warning', warning,
-                                            QgsMessageBar.WARNING)
+                                            Qgis.MessageLevel(1))
 
 
 class Projestions:
