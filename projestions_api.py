@@ -10,4 +10,4 @@ def get_projestions(geojson):
     data = json.dumps({'geom': geojson})
     headers = {'Content-Type': 'application/json'}
     request = Request(url, data.encode('utf-8'), headers)
-    return json.load(urlopen(request))
+    return json.loads(urlopen(request).read().decode('utf-8'))
