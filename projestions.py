@@ -204,7 +204,6 @@ class LoadCrssProgressBar(QtWidgets.QProgressBar):
         self.loadCrssThread.taskFinished.disconnect(self.onFinished)
         self.loadCrssThread.warningSent.disconnect(self.onWarning)
         self.loadCrssThread = None
-        self.plugin.search_complete()
 
     def onWarning(self, warning):
         self.iface.messageBar().pushMessage('Warning', warning,
@@ -248,7 +247,13 @@ class Projestions:
         self.menu = self.tr('&Projestions')
         self.toolbar = self.iface.addToolBar('Projestions')
         self.toolbar.setObjectName('Projestions')
-        self.progressBar = None
+        self.tableModel = CrsTableModel(self.dlg)
+
+        # Set up progress bar
+        self.progressBar = LoadCrssProgressBar(self.dlg, self.iface,
+                                               self.dlg.extentComboBox,
+                                               self.tableModel, self)
+        self.dlg.buttonLayout.insertWidget(0, self.progressBar)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -309,25 +314,14 @@ class Projestions:
 
     def exec_search_button(self):
         # Set up the table model to receive CRS list
-        self.tableModel = CrsTableModel(self.dlg)
         self.sortableTableModel = QtCore.QSortFilterProxyModel()
         self.sortableTableModel.setSourceModel(self.tableModel)
         self.dlg.crsTableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.dlg.crsTableView.setModel(self.sortableTableModel)
         self.dlg.crsTableView.selectionModel().currentRowChanged.connect(self.on_crs_select)
 
-        # Set up progress bar
-        self.progressBar = LoadCrssProgressBar(self.dlg, self.iface,
-                                               self.dlg.extentComboBox,
-                                               self.tableModel, self)
-        self.dlg.buttonLayout.insertWidget(0, self.progressBar)
-
         # Aaaaaand go!
         self.progressBar.onStart()
-
-    def search_complete(self):
-        self.dlg.buttonLayout.removeWidget(self.progressBar)
-        self.progressBar = None
 
     def run(self):
         """Run method that performs all the real work"""
