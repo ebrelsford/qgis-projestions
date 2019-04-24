@@ -123,6 +123,13 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="9"/>
+ <customwidgets>
+  <customwidget>
+   <class>QgsMapCanvas</class>
+   <extends>QWidget</extends>
+   <header>qgsmapcanvas.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
