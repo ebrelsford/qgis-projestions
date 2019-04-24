@@ -22,7 +22,13 @@
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 import os.path
-from qgis.core import Qgis, QgsApplication, QgsProject, QgsCoordinateReferenceSystem
+from qgis.core import (
+    Qgis,
+    QgsApplication,
+    QgsProject,
+    QgsCoordinateReferenceSystem,
+    QgsVectorLayer
+)
 from qgis.gui import QgsMessageBar
 import traceback
 from urllib.error import URLError
@@ -302,12 +308,17 @@ class Projestions:
         # remove the toolbar
         del self.toolbar
 
+    def on_crs_select(self, current):
+        crsCode = current.siblingAtColumn(0).data()
+        self.dlg.set_crs(crsCode)
+
     def exec_search_button(self):
         # Set up the table model to receive CRS list
         self.tableModel = CrsTableModel(self.dlg)
         self.sortableTableModel = QtCore.QSortFilterProxyModel()
         self.sortableTableModel.setSourceModel(self.tableModel)
         self.dlg.crsTableView.setModel(self.sortableTableModel)
+        self.dlg.crsTableView.selectionModel().currentRowChanged.connect(self.on_crs_select)
 
         # Set up progress bar
         self.progressBar = LoadCrssProgressBar(self.dlg, self.iface,

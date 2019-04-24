@@ -24,10 +24,20 @@
 import os
 
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtGui import QColor
+from qgis.core import (
+    Qgis,
+    QgsApplication,
+    QgsCoordinateReferenceSystem,
+    QgsGeometry,
+    QgsRectangle,
+    QgsVectorLayer,
+    QgsWkbTypes
+)
+from qgis.gui import QgsMapCanvas, QgsMapToolPan, QgsRubberBand
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'projestions_dialog_base.ui'))
-
 
 class ProjestionsDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
@@ -39,3 +49,33 @@ class ProjestionsDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        layerPath = QgsApplication.instance().pkgDataPath() + '/resources/data/world_map.shp'
+        self.mapLayers = [QgsVectorLayer(layerPath)]
+        self.mapCrs = QgsCoordinateReferenceSystem(
+            4326,
+            QgsCoordinateReferenceSystem.EpsgCrsId
+        )
+        self.previewBand = QgsRubberBand(self.mAreaCanvas, QgsWkbTypes.PolygonGeometry)
+    def show(self):
+        self.mAreaCanvas.setDestinationCrs(self.mapCrs)
+        self.mAreaCanvas.setLayers(self.mapLayers)
+        self.mAreaCanvas.zoomToFullExtent()
+        super().show()
+
+    def set_crs(self, crsCode):
+        crs = QgsCoordinateReferenceSystem(
+            crsCode,
+            QgsCoordinateReferenceSystem.EpsgCrsId
+        )
+        rect = crs.bounds()
+
+        # Add bounding box to map
+        geom = QgsGeometry.fromRect(rect)
+        self.previewBand.setToGeometry(geom)
+        self.previewBand.setColor(QColor(255, 0, 0, 65))
+
+        # Zoom to extent of bounding box
+        rect.scale(1.1)
+        self.mAreaCanvas.setExtent(rect)
+
+        self.mAreaCanvas.refresh()
