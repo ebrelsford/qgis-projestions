@@ -69,13 +69,17 @@ class ProjestionsDialog(QtWidgets.QDialog, FORM_CLASS):
         )
         rect = crs.bounds()
 
-        # Add bounding box to map
-        geom = QgsGeometry.fromRect(rect)
-        self.previewBand.setToGeometry(geom)
-        self.previewBand.setColor(QColor(255, 0, 0, 65))
+        if rect.area() != 0.0:
+            # Add bounding box to map
+            geom = QgsGeometry.fromRect(rect)
+            self.previewBand.setToGeometry(geom)
+            self.previewBand.setColor(QColor(255, 0, 0, 65))
 
-        # Zoom to extent of bounding box
-        rect.scale(1.1)
-        self.mAreaCanvas.setExtent(rect)
+            # Zoom to extent of bounding box
+            rect.scale(1.1)
+            self.mAreaCanvas.setExtent(rect)
+        else:
+            self.previewBand.hide()
+            self.mAreaCanvas.zoomToFullExtent()
 
         self.mAreaCanvas.refresh()
