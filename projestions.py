@@ -312,6 +312,7 @@ class Projestions:
         self.tableModel = CrsTableModel(self.dlg)
         self.sortableTableModel = QtCore.QSortFilterProxyModel()
         self.sortableTableModel.setSourceModel(self.tableModel)
+        self.dlg.crsTableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.dlg.crsTableView.setModel(self.sortableTableModel)
         self.dlg.crsTableView.selectionModel().currentRowChanged.connect(self.on_crs_select)
 
