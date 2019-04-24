@@ -173,25 +173,20 @@ class LoadCrssThread(QtCore.QThread):
         self.quit()
 
 
-class LoadCrssProgressBar(QtWidgets.QWidget):
+class LoadCrssProgressBar(QtWidgets.QProgressBar):
 
     def __init__(self, parent=None, iface=None, extentComboBox=None,
                  tableModel=None, plugin=None):
         super(LoadCrssProgressBar, self).__init__(parent)
-        layout = QtWidgets.QVBoxLayout(self)
         self.iface = iface
         self.extentComboBox = extentComboBox
         self.tableModel = tableModel
         self.plugin = plugin
-
-        # Create a progress bar and a button and add them to the main layout
-        self.progressBar = QtWidgets.QProgressBar(self)
-        self.progressBar.setRange(0, 1)
-        layout.addWidget(self.progressBar)
+        self.setRange(0, 1)
 
     def onStart(self):
         """Clear progress bar, current CRSs, and start loading new ones"""
-        self.progressBar.setRange(0, 0)
+        self.setRange(0, 0)
         self.tableModel.setItems([])
 
         # Set up signals
@@ -205,7 +200,7 @@ class LoadCrssProgressBar(QtWidgets.QWidget):
         """Stop the progress bar"""
         self.tableModel.setItems(projestions)
 
-        self.progressBar.setRange(0, 1)
+        self.setRange(0, 1)
         self.loadCrssThread.taskFinished.disconnect(self.onFinished)
         self.loadCrssThread.warningSent.disconnect(self.onWarning)
         self.loadCrssThread = None
