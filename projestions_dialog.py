@@ -49,8 +49,15 @@ class ProjestionsDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-        layerPath = QgsApplication.instance().pkgDataPath() + '/resources/data/world_map.shp'
-        self.mapLayers = [QgsVectorLayer(layerPath)]
+
+        worldMapPath = QgsApplication.instance().pkgDataPath() + '/resources/data/world_map.gpkg'
+        countriesPath = worldMapPath + '|layername=countries'
+        statesPath = worldMapPath + '|layername=states_provinces'
+        self.mapLayers = [
+            QgsVectorLayer(countriesPath),
+            QgsVectorLayer(statesPath)
+        ]
+
         self.mapCrs = QgsCoordinateReferenceSystem(
             4326,
             QgsCoordinateReferenceSystem.EpsgCrsId
